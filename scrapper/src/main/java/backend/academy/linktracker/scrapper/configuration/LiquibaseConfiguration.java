@@ -3,6 +3,7 @@ package backend.academy.linktracker.scrapper.configuration;
 import javax.sql.DataSource;
 import liquibase.integration.spring.SpringLiquibase;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,5 +20,14 @@ public class LiquibaseConfiguration {
         liquibase.setDataSource(dataSource);
         liquibase.setChangeLog(changeLog);
         return liquibase;
+    }
+
+    @Bean
+    public static BeanFactoryPostProcessor liquibaseBeforeJpaPostProcessor() {
+        return beanFactory -> {
+            if (beanFactory.containsBeanDefinition("entityManagerFactory")) {
+                beanFactory.getBeanDefinition("entityManagerFactory").setDependsOn("springLiquibase");
+            }
+        };
     }
 }
