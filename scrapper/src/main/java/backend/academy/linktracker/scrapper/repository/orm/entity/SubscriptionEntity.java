@@ -34,7 +34,7 @@ public class SubscriptionEntity {
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "subscription_filters", joinColumns = @JoinColumn(name = "subscription_id"))
-    @Column(name = "filter_value")
+    @Column(name = "filter_value", nullable = false)
     private List<String> filters = new ArrayList<>();
 
     @ManyToMany(fetch = FetchType.EAGER)
