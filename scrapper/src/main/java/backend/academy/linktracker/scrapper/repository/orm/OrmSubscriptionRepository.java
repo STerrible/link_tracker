@@ -83,8 +83,9 @@ public class OrmSubscriptionRepository implements SubscriptionRepository {
         if (found.isEmpty()) {
             return null;
         }
-        LinkResponse response = toResponse(found.get());
-        subscriptions.delete(found.get());
+        SubscriptionEntity subscription = found.orElseThrow();
+        LinkResponse response = toResponse(subscription);
+        subscriptions.delete(subscription);
         return response;
     }
 
