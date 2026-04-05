@@ -1,4 +1,4 @@
-![LinkTracker Banner](img_5.png)
+![img_5.png](img_5.png)
 
 # LinkTracker
 
@@ -75,7 +75,7 @@ $env:BOT_TOKEN="ВАШ_ТОКЕН"
 Для запуска сервиса `scrapper` используйте:
 
 ```powershell
-./mvnw -f scrapper/pom.xml spring-boot:run
+..\mvnw.cmd spring-boot:run -DskipTests "-Dspring-boot.run.arguments=--spring.datasource.url=jdbc:postgresql://localhost:5433/scrapper --spring.datasource.username=scrapper --spring.datasource.password=scrapper"
 ```
 
 ---
@@ -104,19 +104,19 @@ docker compose up -d postgres
 
 При вводе символа `/` в Telegram появляется меню-подсказка со всеми доступными командами.
 
-![Меню команд](img.png)
+![img.png](img.png)
 
 ### 2. Добавление ссылки в отслеживание
 
 Чтобы добавить ссылку, необходимо выполнить команду `/track`, а затем, желательно, добавить теги. Пример показан на изображении ниже.
 
-![Добавление ссылки](img_1.png)
+![img_1.png](img_1.png)
 
 ### 3. Просмотр отслеживаемых ссылок
 
 Команда `/list` позволяет вывести все ссылки, которые были добавлены в отслеживание.
 
-![Список ссылок](img_2.png)
+![img_2.png](img_2.png)
 
 ---
 
@@ -158,8 +158,8 @@ select * from subscriptions;
 
 Пример корректной работы:
 
-![Проверка структуры БД](img_3.png)
-![Проверка содержимого БД](img_4.png)
+![img_3.png](img_3.png)
+![img_4.png](img_4.png)
 
 ---
 
