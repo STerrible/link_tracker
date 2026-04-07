@@ -4,8 +4,20 @@ server:
 spring:
   application:
     name: scrapper
+  datasource:
+    url: ${POSTGRES_URL:jdbc:postgresql://localhost:5433/scrapper}
+    username: ${POSTGRES_USER:scrapper}
+    password: ${POSTGRES_PASSWORD:scrapper}
+  liquibase:
+    enabled: true
+    change-log: classpath:/migrations/changelog-master.yaml
+  jpa:
+    hibernate:
+      ddl-auto: validate
 
 app:
+  database:
+    access-type: ${ACCESS_TYPE:SQL}
   stackoverflow:
     key: ${STACKOVERFLOW_KEY:}
     access-token: ${STACKOVERFLOW_ACCESS_KEY:}

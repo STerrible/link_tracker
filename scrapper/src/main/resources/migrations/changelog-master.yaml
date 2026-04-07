@@ -1,0 +1,8 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-init
+      author: codex
+      changes:
+        - sqlFile:
+            path: 001-init.sql
+            relativeToChangelogFile: true

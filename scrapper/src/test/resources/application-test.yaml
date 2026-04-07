@@ -8,3 +8,10 @@ app:
     base-url: http://localhost:8080
   scheduler:
     interval: 1h
+  database:
+    access-type: SQL
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
