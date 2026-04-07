@@ -124,9 +124,7 @@ public class OrmSubscriptionRepository implements SubscriptionRepository {
 
     @Override
     public OptionalLong linkId(URI link) {
-        return links.findByUrl(link.toString())
-                .map(LinkEntity::getId)
-                .stream()
+        return links.findByUrl(link.toString()).map(LinkEntity::getId).stream()
                 .mapToLong(Long::longValue)
                 .findFirst();
     }
