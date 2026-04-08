@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 
@@ -85,6 +86,27 @@ class LinkUpdateSchedulerTest {
         assertTrue(notificationSender.failures.getFirst().contains("broken"));
     }
 
+    @Test
+    void schedulerUsesParallelProcessingWhenParallelismConfigured() {
+        InMemorySubscriptionRepository repository = new InMemorySubscriptionRepository();
+        repository.registerChat(1L);
+        for (int i = 0; i < 8; i++) {
+            repository.addLink(1L, URI.create("https://github.com/owner/parallel-" + i), List.of(), List.of());
+        }
+
+        RecordingNotificationSender notificationSender = new RecordingNotificationSender();
+        SchedulerProperties properties = new SchedulerProperties();
+        properties.setBatchSize(8);
+        properties.setParallelism(4);
+        ParallelAwareClient client = new ParallelAwareClient();
+        LinkUpdateScheduler scheduler = new LinkUpdateScheduler(repository, List.of(client), notificationSender, properties);
+
+        scheduler.checkUpdates();
+
+        assertTrue(client.parallelObserved.get());
+        assertEquals(8, notificationSender.calls.get());
+    }
+
     private static final class StubLinkSourceClient implements LinkSourceClient {
 
         private final Instant updatedAt;
@@ -133,6 +155,27 @@ class LinkUpdateSchedulerTest {
             return Optional.of(new LinkSourceUpdate(
                     updates.computeIfAbsent(uri, key -> Instant.parse("2026-01-01T00:00:00Z")),
                     "ok"));
+        }
+    }
+
+    private static final class ParallelAwareClient implements LinkSourceClient {
+        private final AtomicInteger inFlight = new AtomicInteger();
+        private final AtomicBoolean parallelObserved = new AtomicBoolean(false);
+
+        @Override
+        public Optional<LinkSourceUpdate> fetchUpdate(URI uri) {
+            int current = inFlight.incrementAndGet();
+            if (current > 1) {
+                parallelObserved.set(true);
+            }
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException exception) {
+                Thread.currentThread().interrupt();
+            } finally {
+                inFlight.decrementAndGet();
+            }
+            return Optional.of(new LinkSourceUpdate(Instant.parse("2026-01-01T00:00:00Z"), "parallel"));
         }
     }
 }
