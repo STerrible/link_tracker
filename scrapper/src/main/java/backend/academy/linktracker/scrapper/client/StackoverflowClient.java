@@ -70,14 +70,41 @@ public class StackoverflowClient implements LinkSourceClient {
                             .build(parts[2]))
                     .retrieve()
                     .body(AnswersResponse.class);
-            if (answersResponse == null || answersResponse.items() == null) {
-                return Optional.empty();
-            }
-            return answersResponse.items().stream()
-                    .filter(answer -> answer != null && answer.creationDate() != null)
-                    .max(Comparator.comparing(AnswerResponse::creationDate))
-                    .map(answer -> new LinkSourceUpdate(
-                            Instant.ofEpochSecond(answer.creationDate()), formatDescription(question, answer)));
+            CommentsResponse commentsResponse = restClient
+                    .get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/questions/{id}/comments")
+                            .queryParam("site", "stackoverflow")
+                            .queryParam("sort", "creation")
+                            .queryParam("order", "desc")
+                            .queryParam("pagesize", 20)
+                            .queryParam("filter", "withbody")
+                            .queryParam("key", properties.getKey())
+                            .build(parts[2]))
+                    .retrieve()
+                    .body(CommentsResponse.class);
+
+            Optional<LinkSourceUpdate> latestAnswer = answersResponse == null || answersResponse.items() == null
+                    ? Optional.empty()
+                    : answersResponse.items().stream()
+                            .filter(answer -> answer != null && answer.creationDate() != null)
+                            .max(Comparator.comparing(AnswerResponse::creationDate))
+                            .map(answer -> new LinkSourceUpdate(
+                                    Instant.ofEpochSecond(answer.creationDate()),
+                                    formatAnswerDescription(question, answer)));
+
+            Optional<LinkSourceUpdate> latestComment = commentsResponse == null || commentsResponse.items() == null
+                    ? Optional.empty()
+                    : commentsResponse.items().stream()
+                            .filter(comment -> comment != null && comment.creationDate() != null)
+                            .max(Comparator.comparing(CommentResponse::creationDate))
+                            .map(comment -> new LinkSourceUpdate(
+                                    Instant.ofEpochSecond(comment.creationDate()),
+                                    formatCommentDescription(question, comment)));
+
+            return java.util.stream.Stream.of(latestAnswer, latestComment)
+                    .flatMap(Optional::stream)
+                    .max(Comparator.comparing(LinkSourceUpdate::updatedAt));
         } catch (HttpClientErrorException exception) {
             log.atWarn()
                     .addKeyValue("uri", uri)
@@ -95,31 +122,59 @@ public class StackoverflowClient implements LinkSourceClient {
 
     private record QuestionResponse(
             String title,
+
             @com.fasterxml.jackson.annotation.JsonProperty("last_activity_date")
             Long lastActivityDate) {}
 
     private record AnswersResponse(List<AnswerResponse> items) {}
 
+    private record CommentsResponse(List<CommentResponse> items) {}
+
     private record AnswerResponse(
             @com.fasterxml.jackson.annotation.JsonProperty("creation_date")
             Long creationDate,
+
             @com.fasterxml.jackson.annotation.JsonProperty("body_markdown")
             String bodyMarkdown,
+
             OwnerResponse owner) {}
 
     private record OwnerResponse(
             @com.fasterxml.jackson.annotation.JsonProperty("display_name")
             String displayName) {}
 
-    private String formatDescription(QuestionResponse question, AnswerResponse answer) {
+    private String formatAnswerDescription(QuestionResponse question, AnswerResponse answer) {
         String title = question.title() == null ? "(без темы)" : question.title();
-        String author =
-                answer.owner() == null || answer.owner().displayName() == null ? "unknown" : answer.owner().displayName();
+        String author = answer.owner() == null || answer.owner().displayName() == null
+                ? "unknown"
+                : answer.owner().displayName();
         String createdAt = answer.creationDate() == null
                 ? "unknown-time"
                 : Instant.ofEpochSecond(answer.creationDate()).toString();
         String preview = sanitizePreview(answer.bodyMarkdown(), 200);
         return "Ответ на вопрос: %s%nАвтор: %s%nСоздано: %s%nПревью: %s".formatted(title, author, createdAt, preview);
+    }
+
+    private record CommentResponse(
+            @com.fasterxml.jackson.annotation.JsonProperty("creation_date")
+            Long creationDate,
+
+            @com.fasterxml.jackson.annotation.JsonProperty("body_markdown")
+            String bodyMarkdown,
+
+            OwnerResponse owner) {}
+
+    private String formatCommentDescription(QuestionResponse question, CommentResponse comment) {
+        String title = question.title() == null ? "(без темы)" : question.title();
+        String author = comment.owner() == null || comment.owner().displayName() == null
+                ? "unknown"
+                : comment.owner().displayName();
+        String createdAt = comment.creationDate() == null
+                ? "unknown-time"
+                : Instant.ofEpochSecond(comment.creationDate()).toString();
+        String preview = sanitizePreview(comment.bodyMarkdown(), 200);
+        return "Комментарий к вопросу: %s%nАвтор: %s%nСоздано: %s%nПревью: %s"
+                .formatted(title, author, createdAt, preview);
     }
 
     private String sanitizePreview(String source, int limit) {

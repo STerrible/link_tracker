@@ -92,10 +92,14 @@ public class LinkUpdateScheduler implements DisposableBean {
             }
             long linkId = repository.linkId(trackedUri).orElseThrow();
             notificationSender.sendUpdate(linkId, trackedUri, update.description(), chats);
-            log.atInfo().addKeyValue("link", trackedUri).addKeyValue("chats", chats.size()).log("scheduled_update_sent");
+            log.atInfo()
+                    .addKeyValue("link", trackedUri)
+                    .addKeyValue("chats", chats.size())
+                    .log("scheduled_update_sent");
         } catch (RuntimeException exception) {
             List<Long> chats = repository.chatsTracking(trackedUri);
-            notificationSender.sendFailure(trackedUri, chats, exception.getClass().getSimpleName());
+            notificationSender.sendFailure(
+                    trackedUri, chats, exception.getClass().getSimpleName());
             log.atWarn().addKeyValue("link", trackedUri).setCause(exception).log("scheduled_update_failed");
         }
     }

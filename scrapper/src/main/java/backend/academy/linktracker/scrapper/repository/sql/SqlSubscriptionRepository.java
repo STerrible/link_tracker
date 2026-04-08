@@ -32,7 +32,8 @@ public class SqlSubscriptionRepository implements SubscriptionRepository {
 
     @Override
     public boolean chatExists(long chatId) {
-        Boolean exists = jdbcTemplate.queryForObject("select exists(select 1 from chats where chat_id = ?)", Boolean.class, chatId);
+        Boolean exists = jdbcTemplate.queryForObject(
+                "select exists(select 1 from chats where chat_id = ?)", Boolean.class, chatId);
         return Boolean.TRUE.equals(exists);
     }
 
@@ -145,7 +146,8 @@ public class SqlSubscriptionRepository implements SubscriptionRepository {
 
     @Override
     public OptionalLong linkId(URI link) {
-        Long id = jdbcTemplate.queryForObject("select id from links where url = ? limit 1", Long.class, link.toString());
+        Long id =
+                jdbcTemplate.queryForObject("select id from links where url = ? limit 1", Long.class, link.toString());
         return id == null ? OptionalLong.empty() : OptionalLong.of(id);
     }
 

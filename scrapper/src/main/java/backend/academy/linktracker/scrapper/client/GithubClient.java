@@ -49,7 +49,10 @@ public class GithubClient implements LinkSourceClient {
         try {
             IssueResponse[] response = restClient
                     .get()
-                    .uri("/repos/{owner}/{repo}/issues?state=all&sort=created&direction=desc&per_page=20", segments[0], segments[1])
+                    .uri(
+                            "/repos/{owner}/{repo}/issues?state=all&sort=created&direction=desc&per_page=20",
+                            segments[0],
+                            segments[1])
                     .retrieve()
                     .body(IssueResponse[].class);
             List<IssueResponse> issues = response == null ? List.of() : Arrays.asList(response);
@@ -73,9 +76,12 @@ public class GithubClient implements LinkSourceClient {
 
     private String formatDescription(IssueResponse issue) {
         String entityType = issue.pullRequest() == null ? "Issue" : "PR";
-        String author = issue.user() == null || issue.user().login() == null ? "unknown" : issue.user().login();
+        String author = issue.user() == null || issue.user().login() == null
+                ? "unknown"
+                : issue.user().login();
         String title = issue.title() == null ? "(без названия)" : issue.title();
-        String createdAt = issue.createdAt() == null ? "unknown-time" : issue.createdAt().toString();
+        String createdAt =
+                issue.createdAt() == null ? "unknown-time" : issue.createdAt().toString();
         String preview = sanitizePreview(issue.body(), 200);
         return "%s: %s%nАвтор: %s%nСоздано: %s%nПревью: %s".formatted(entityType, title, author, createdAt, preview);
     }
@@ -92,10 +98,13 @@ public class GithubClient implements LinkSourceClient {
             String title,
             String body,
             UserResponse user,
+
             @com.fasterxml.jackson.annotation.JsonProperty("updated_at")
             java.time.Instant updatedAt,
+
             @com.fasterxml.jackson.annotation.JsonProperty("created_at")
             java.time.Instant createdAt,
+
             @com.fasterxml.jackson.annotation.JsonProperty("pull_request")
             Object pullRequest) {}
 
