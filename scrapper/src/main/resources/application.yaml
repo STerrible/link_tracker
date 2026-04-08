@@ -26,6 +26,8 @@ app:
   bot:
     base-url: ${BOT_BASE_URL:http://localhost:8080}
   scheduler:
-    interval: 30s
+    interval: 5s
+    batch-size: 50
+    parallelism: 1
     batch-size: 100
     parallelism: 1
