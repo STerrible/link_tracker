@@ -127,25 +127,21 @@ public class StackoverflowClient implements LinkSourceClient {
     private record QuestionResponse(
             String title,
 
-            @JsonProperty("last_activity_date")
-            Long lastActivityDate) {}
+            @JsonProperty("last_activity_date") Long lastActivityDate) {}
 
     private record AnswersResponse(List<AnswerResponse> items) {}
 
     private record CommentsResponse(List<CommentResponse> items) {}
 
     private record AnswerResponse(
-            @JsonProperty("creation_date")
-            Long creationDate,
+            @JsonProperty("creation_date") Long creationDate,
 
-            @JsonProperty("body_markdown")
-            String bodyMarkdown,
+            @JsonProperty("body_markdown") String bodyMarkdown,
 
             OwnerResponse owner) {}
 
     private record OwnerResponse(
-            @JsonProperty("display_name")
-            String displayName) {}
+            @JsonProperty("display_name") String displayName) {}
 
     private String formatAnswerDescription(QuestionResponse question, AnswerResponse answer) {
         String title = question.title() == null ? "(без темы)" : question.title();
@@ -160,11 +156,9 @@ public class StackoverflowClient implements LinkSourceClient {
     }
 
     private record CommentResponse(
-            @JsonProperty("creation_date")
-            Long creationDate,
+            @JsonProperty("creation_date") Long creationDate,
 
-            @JsonProperty("body_markdown")
-            String bodyMarkdown,
+            @JsonProperty("body_markdown") String bodyMarkdown,
 
             OwnerResponse owner) {}
 

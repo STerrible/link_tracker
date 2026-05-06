@@ -103,14 +103,11 @@ public class GithubClient implements LinkSourceClient {
             String body,
             UserResponse user,
 
-            @JsonProperty("updated_at")
-            java.time.Instant updatedAt,
+            @JsonProperty("updated_at") java.time.Instant updatedAt,
 
-            @JsonProperty("created_at")
-            java.time.Instant createdAt,
+            @JsonProperty("created_at") java.time.Instant createdAt,
 
-            @JsonProperty("pull_request")
-            Object pullRequest) {}
+            @JsonProperty("pull_request") Object pullRequest) {}
 
     private record UserResponse(String login) {}
 }

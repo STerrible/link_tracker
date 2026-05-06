@@ -64,9 +64,8 @@ public class LinkUpdateScheduler implements DisposableBean {
     }
 
     private void processBatch(List<URI> uris) {
-        List<Future<?>> tasks = uris.stream()
-                .map(uri -> executor.submit(() -> processUri(uri)))
-                .toList();
+        List<? extends Future<?>> tasks =
+                uris.stream().map(uri -> executor.submit(() -> processUri(uri))).toList();
         tasks.forEach(task -> {
             try {
                 task.get();
@@ -89,7 +88,8 @@ public class LinkUpdateScheduler implements DisposableBean {
             LinkSourceUpdate update = latestUpdate.orElseThrow();
             Instant newestSeen = lastSeenByUri.compute(
                     trackedUri,
-                    (key, oldValue) -> oldValue == null || update.updatedAt().isAfter(oldValue) ? update.updatedAt() : oldValue);
+                    (key, oldValue) ->
+                            oldValue == null || update.updatedAt().isAfter(oldValue) ? update.updatedAt() : oldValue);
             if (!update.updatedAt().equals(newestSeen)) {
                 return;
             }
