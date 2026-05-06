@@ -1,6 +1,7 @@
 package backend.academy.linktracker.scrapper.client;
 
 import backend.academy.linktracker.scrapper.properties.GithubProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -21,6 +22,8 @@ public class GithubClient implements LinkSourceClient {
     private static final String GITHUB_API_BASE_URL = "https://api.github.com";
     private static final String GITHUB_API_VERSION = "2022-11-28";
     private static final String USER_AGENT = "link-tracker-scrapper";
+    private static final int ISSUES_PER_PAGE = 20;
+    private static final int PREVIEW_LIMIT = 200;
 
     private final RestClient restClient;
 
@@ -50,7 +53,8 @@ public class GithubClient implements LinkSourceClient {
             IssueResponse[] response = restClient
                     .get()
                     .uri(
-                            "/repos/{owner}/{repo}/issues?state=all&sort=created&direction=desc&per_page=20",
+                            "/repos/{owner}/{repo}/issues?state=all&sort=created&direction=desc&per_page="
+                                    + ISSUES_PER_PAGE,
                             segments[0],
                             segments[1])
                     .retrieve()
@@ -82,7 +86,7 @@ public class GithubClient implements LinkSourceClient {
         String title = issue.title() == null ? "(без названия)" : issue.title();
         String createdAt =
                 issue.createdAt() == null ? "unknown-time" : issue.createdAt().toString();
-        String preview = sanitizePreview(issue.body(), 200);
+        String preview = sanitizePreview(issue.body(), PREVIEW_LIMIT);
         return "%s: %s%nАвтор: %s%nСоздано: %s%nПревью: %s".formatted(entityType, title, author, createdAt, preview);
     }
 
@@ -91,7 +95,7 @@ public class GithubClient implements LinkSourceClient {
             return "(пусто)";
         }
         String normalized = source.replaceAll("\\s+", " ").trim();
-        return normalized.length() <= limit ? normalized : normalized.substring(0, limit);
+        return normalized.length() <= limit ? normalized : normalized.substring(0, limit) + "...";
     }
 
     private record IssueResponse(
@@ -99,13 +103,13 @@ public class GithubClient implements LinkSourceClient {
             String body,
             UserResponse user,
 
-            @com.fasterxml.jackson.annotation.JsonProperty("updated_at")
+            @JsonProperty("updated_at")
             java.time.Instant updatedAt,
 
-            @com.fasterxml.jackson.annotation.JsonProperty("created_at")
+            @JsonProperty("created_at")
             java.time.Instant createdAt,
 
-            @com.fasterxml.jackson.annotation.JsonProperty("pull_request")
+            @JsonProperty("pull_request")
             Object pullRequest) {}
 
     private record UserResponse(String login) {}

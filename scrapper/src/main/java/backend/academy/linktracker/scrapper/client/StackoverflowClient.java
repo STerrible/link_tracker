@@ -1,11 +1,13 @@
 package backend.academy.linktracker.scrapper.client;
 
 import backend.academy.linktracker.scrapper.properties.StackoverflowProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.net.URI;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -19,6 +21,8 @@ public class StackoverflowClient implements LinkSourceClient {
     private static final Logger log = LoggerFactory.getLogger(StackoverflowClient.class);
     private static final String STACKOVERFLOW_HOST = "stackoverflow.com";
     private static final String STACKEXCHANGE_API_BASE_URL = "https://api.stackexchange.com/2.3";
+    private static final int PAGE_SIZE = 20;
+    private static final int PREVIEW_LIMIT = 200;
 
     private final RestClient restClient;
     private final StackoverflowProperties properties;
@@ -64,7 +68,7 @@ public class StackoverflowClient implements LinkSourceClient {
                             .queryParam("site", "stackoverflow")
                             .queryParam("sort", "creation")
                             .queryParam("order", "desc")
-                            .queryParam("pagesize", 20)
+                            .queryParam("pagesize", PAGE_SIZE)
                             .queryParam("filter", "withbody")
                             .queryParam("key", properties.getKey())
                             .build(parts[2]))
@@ -77,7 +81,7 @@ public class StackoverflowClient implements LinkSourceClient {
                             .queryParam("site", "stackoverflow")
                             .queryParam("sort", "creation")
                             .queryParam("order", "desc")
-                            .queryParam("pagesize", 20)
+                            .queryParam("pagesize", PAGE_SIZE)
                             .queryParam("filter", "withbody")
                             .queryParam("key", properties.getKey())
                             .build(parts[2]))
@@ -102,7 +106,7 @@ public class StackoverflowClient implements LinkSourceClient {
                                     Instant.ofEpochSecond(comment.creationDate()),
                                     formatCommentDescription(question, comment)));
 
-            return java.util.stream.Stream.of(latestAnswer, latestComment)
+            return Stream.of(latestAnswer, latestComment)
                     .flatMap(Optional::stream)
                     .max(Comparator.comparing(LinkSourceUpdate::updatedAt));
         } catch (HttpClientErrorException exception) {
@@ -123,7 +127,7 @@ public class StackoverflowClient implements LinkSourceClient {
     private record QuestionResponse(
             String title,
 
-            @com.fasterxml.jackson.annotation.JsonProperty("last_activity_date")
+            @JsonProperty("last_activity_date")
             Long lastActivityDate) {}
 
     private record AnswersResponse(List<AnswerResponse> items) {}
@@ -131,16 +135,16 @@ public class StackoverflowClient implements LinkSourceClient {
     private record CommentsResponse(List<CommentResponse> items) {}
 
     private record AnswerResponse(
-            @com.fasterxml.jackson.annotation.JsonProperty("creation_date")
+            @JsonProperty("creation_date")
             Long creationDate,
 
-            @com.fasterxml.jackson.annotation.JsonProperty("body_markdown")
+            @JsonProperty("body_markdown")
             String bodyMarkdown,
 
             OwnerResponse owner) {}
 
     private record OwnerResponse(
-            @com.fasterxml.jackson.annotation.JsonProperty("display_name")
+            @JsonProperty("display_name")
             String displayName) {}
 
     private String formatAnswerDescription(QuestionResponse question, AnswerResponse answer) {
@@ -151,15 +155,15 @@ public class StackoverflowClient implements LinkSourceClient {
         String createdAt = answer.creationDate() == null
                 ? "unknown-time"
                 : Instant.ofEpochSecond(answer.creationDate()).toString();
-        String preview = sanitizePreview(answer.bodyMarkdown(), 200);
+        String preview = sanitizePreview(answer.bodyMarkdown(), PREVIEW_LIMIT);
         return "Ответ на вопрос: %s%nАвтор: %s%nСоздано: %s%nПревью: %s".formatted(title, author, createdAt, preview);
     }
 
     private record CommentResponse(
-            @com.fasterxml.jackson.annotation.JsonProperty("creation_date")
+            @JsonProperty("creation_date")
             Long creationDate,
 
-            @com.fasterxml.jackson.annotation.JsonProperty("body_markdown")
+            @JsonProperty("body_markdown")
             String bodyMarkdown,
 
             OwnerResponse owner) {}
@@ -172,7 +176,7 @@ public class StackoverflowClient implements LinkSourceClient {
         String createdAt = comment.creationDate() == null
                 ? "unknown-time"
                 : Instant.ofEpochSecond(comment.creationDate()).toString();
-        String preview = sanitizePreview(comment.bodyMarkdown(), 200);
+        String preview = sanitizePreview(comment.bodyMarkdown(), PREVIEW_LIMIT);
         return "Комментарий к вопросу: %s%nАвтор: %s%nСоздано: %s%nПревью: %s"
                 .formatted(title, author, createdAt, preview);
     }
@@ -182,6 +186,6 @@ public class StackoverflowClient implements LinkSourceClient {
             return "(пусто)";
         }
         String normalized = source.replaceAll("\\s+", " ").trim();
-        return normalized.length() <= limit ? normalized : normalized.substring(0, limit);
+        return normalized.length() <= limit ? normalized : normalized.substring(0, limit) + "...";
     }
 }

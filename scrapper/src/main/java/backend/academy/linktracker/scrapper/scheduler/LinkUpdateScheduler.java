@@ -16,6 +16,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,17 +57,23 @@ public class LinkUpdateScheduler implements DisposableBean {
         do {
             uris = repository.trackedUris(pageSize, page * pageSize);
             activeUris.addAll(uris);
-            if (schedulerProperties.getParallelism() <= 1) {
-                uris.forEach(this::processUri);
-            } else {
-                var tasks = uris.stream()
-                        .map(uri -> java.util.concurrent.CompletableFuture.runAsync(() -> processUri(uri), executor))
-                        .toList();
-                tasks.forEach(java.util.concurrent.CompletableFuture::join);
-            }
+            processBatch(uris);
             page++;
         } while (!uris.isEmpty());
         lastSeenByUri.keySet().retainAll(activeUris);
+    }
+
+    private void processBatch(List<URI> uris) {
+        List<Future<?>> tasks = uris.stream()
+                .map(uri -> executor.submit(() -> processUri(uri)))
+                .toList();
+        tasks.forEach(task -> {
+            try {
+                task.get();
+            } catch (Exception exception) {
+                log.atWarn().setCause(exception).log("scheduled_update_task_failed");
+            }
+        });
     }
 
     private void processUri(URI trackedUri) {
@@ -80,11 +87,12 @@ public class LinkUpdateScheduler implements DisposableBean {
             }
 
             LinkSourceUpdate update = latestUpdate.orElseThrow();
-            Instant previous = lastSeenByUri.getOrDefault(trackedUri, Instant.EPOCH);
-            if (!update.updatedAt().isAfter(previous)) {
+            Instant newestSeen = lastSeenByUri.compute(
+                    trackedUri,
+                    (key, oldValue) -> oldValue == null || update.updatedAt().isAfter(oldValue) ? update.updatedAt() : oldValue);
+            if (!update.updatedAt().equals(newestSeen)) {
                 return;
             }
-            lastSeenByUri.put(trackedUri, update.updatedAt());
 
             List<Long> chats = repository.chatsTracking(trackedUri);
             if (chats.isEmpty()) {
