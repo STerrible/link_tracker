@@ -4,6 +4,14 @@ server:
 spring:
   application:
     name: bot
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: backend.academy.linktracker.bot.model
+        spring.json.value.default.type: backend.academy.linktracker.bot.model.LinkUpdateRequest
 
 app:
   telegram:
@@ -13,3 +21,6 @@ app:
     debug: false
   scrapper:
     base-url: ${SCRAPPER_BASE_URL:http://localhost:8081}
+  kafka:
+    topic: ${KAFKA_TOPIC:link-updates}
+    group-id: ${KAFKA_GROUP_ID:bot}

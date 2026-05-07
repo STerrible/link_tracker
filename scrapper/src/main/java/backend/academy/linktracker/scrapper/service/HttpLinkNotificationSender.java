@@ -5,10 +5,12 @@ import backend.academy.linktracker.scrapper.model.LinkUpdateRequest;
 import java.net.URI;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@ConditionalOnProperty(prefix = "app.notification", name = "transport", havingValue = "HTTP")
 public class HttpLinkNotificationSender implements LinkNotificationSender {
 
     private final BotClient botClient;
