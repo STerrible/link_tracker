@@ -14,4 +14,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @EqualsAndHashCode
 public class SchedulerProperties {
     private Duration interval = Duration.ofSeconds(30);
+    private int batchSize = 100;
+    private int parallelism = 1;
 }

@@ -41,7 +41,7 @@ public class UpdateService {
     }
 
     public void handleLinkUpdate(LinkUpdateRequest update) {
-        String message = "Обнаружено обновление: " + update.url();
+        String message = "Обнаружено обновление:\n" + update.url() + "\n\n" + update.description();
         AtomicInteger sent = new AtomicInteger();
         update.tgChatIds().parallelStream().forEach(chatId -> {
             try {
