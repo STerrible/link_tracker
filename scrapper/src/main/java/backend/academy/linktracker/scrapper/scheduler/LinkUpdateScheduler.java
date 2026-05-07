@@ -86,13 +86,11 @@ public class LinkUpdateScheduler implements DisposableBean {
             }
 
             LinkSourceUpdate update = latestUpdate.orElseThrow();
-            Instant newestSeen = lastSeenByUri.compute(
-                    trackedUri,
-                    (key, oldValue) ->
-                            oldValue == null || update.updatedAt().isAfter(oldValue) ? update.updatedAt() : oldValue);
-            if (!update.updatedAt().equals(newestSeen)) {
+            Instant lastSeen = lastSeenByUri.get(trackedUri);
+            if (lastSeen != null && !update.updatedAt().isAfter(lastSeen)) {
                 return;
             }
+            lastSeenByUri.put(trackedUri, update.updatedAt());
 
             List<Long> chats = repository.chatsTracking(trackedUri);
             if (chats.isEmpty()) {
