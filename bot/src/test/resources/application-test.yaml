@@ -7,3 +7,16 @@ app:
     debug: true
   scrapper:
     base-url: http://localhost:18081
+  kafka:
+    topic: link-updates
+    group-id: bot-test
+
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: backend.academy.linktracker.bot.model
+        spring.json.value.default.type: backend.academy.linktracker.bot.model.LinkUpdateRequest
