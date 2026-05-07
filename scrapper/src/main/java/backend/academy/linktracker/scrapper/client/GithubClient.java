@@ -95,7 +95,13 @@ public class GithubClient implements LinkSourceClient {
             return "(пусто)";
         }
         String normalized = source.replaceAll("\\s+", " ").trim();
-        return normalized.length() <= limit ? normalized : normalized.substring(0, limit) + "...";
+        if (normalized.length() <= limit) {
+            return normalized;
+        }
+        if (limit <= 3) {
+            return "...".substring(0, limit);
+        }
+        return normalized.substring(0, limit - 3) + "...";
     }
 
     private record IssueResponse(
