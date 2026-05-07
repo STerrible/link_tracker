@@ -10,8 +10,16 @@ app:
     interval: 1h
   database:
     access-type: SQL
+  notification:
+    transport: HTTP
+    topic: link-updates
 
 spring:
   jpa:
     hibernate:
       ddl-auto: validate
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer

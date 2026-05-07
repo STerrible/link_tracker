@@ -14,6 +14,11 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
 app:
   database:
@@ -29,3 +34,6 @@ app:
     interval: 5s
     batch-size: 50
     parallelism: 1
+  notification:
+    transport: ${NOTIFICATION_TRANSPORT:KAFKA}
+    topic: ${KAFKA_TOPIC:link-updates}
