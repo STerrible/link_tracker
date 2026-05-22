@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.0.2</version>
+        <version>3.4.6</version>
         <!-- lookup parent from repository -->
         <relativePath/>
     </parent>
@@ -41,15 +41,15 @@
     <properties>
         <revision>0.0.1</revision>
 
-        <java.version>25</java.version>
-        <maven.version>3.9.12</maven.version>
+        <java.version>21</java.version>
+        <maven.version>3.9.10</maven.version>
 
         <awaitility.version>4.3.0</awaitility.version>
         <commons-codec.version>1.21.0</commons-codec.version>
         <commons-collections.version>4.5.0</commons-collections.version>
         <commons-compress.version>1.28.0</commons-compress.version>
         <commons-io.version>2.21.0</commons-io.version>
-        <commons-lang.version>3.20.0</commons-lang.version>
+        <commons-lang3.version>3.20.0</commons-lang3.version>
         <commons-text.version>1.15.0</commons-text.version>
         <datafaker.version>2.5.2</datafaker.version>
         <grpc.version>1.77.1</grpc.version>
