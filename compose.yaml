@@ -14,63 +14,66 @@ services:
       retries: 10
 
   kafka-1:
-    image: bitnami/kafka:3.8
+    image: confluentinc/cp-kafka:7.6.1
     hostname: kafka-1
     container_name: kafka-1
-    environment: &kafka-env
-      KAFKA_ENABLE_KRAFT: "yes"
-      KAFKA_CFG_PROCESS_ROLES: "broker,controller"
-      KAFKA_CFG_LISTENERS: "PLAINTEXT://:9092,CONTROLLER://:9093"
-      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT"
-      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
-      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: "1@kafka-1:9093,2@kafka-2:9093,3@kafka-3:9093"
-      KAFKA_KRAFT_CLUSTER_ID: "abcdefghijklmnopqrstuv"
-      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: "false"
-      KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR: "3"
-      KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "3"
-      KAFKA_CFG_TRANSACTION_STATE_LOG_MIN_ISR: "2"
-      ALLOW_PLAINTEXT_LISTENER: "yes"
-      BITNAMI_DEBUG: "false"
-      KAFKA_CFG_NODE_ID: "1"
-      KAFKA_CFG_ADVERTISED_LISTENERS: "PLAINTEXT://kafka-1:9092"
     ports:
       - "9092:9092"
-
-  kafka-2:
-    image: bitnami/kafka:3.8
-    hostname: kafka-2
-    container_name: kafka-2
     environment:
-      <<: *kafka-env
-      KAFKA_CFG_NODE_ID: "2"
-      KAFKA_CFG_ADVERTISED_LISTENERS: "PLAINTEXT://kafka-2:9092"
-    ports:
-      - "9094:9092"
+      CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
 
-  kafka-3:
-    image: bitnami/kafka:3.8
-    hostname: kafka-3
-    container_name: kafka-3
-    environment:
-      <<: *kafka-env
-      KAFKA_CFG_NODE_ID: "3"
-      KAFKA_CFG_ADVERTISED_LISTENERS: "PLAINTEXT://kafka-3:9092"
-    ports:
-      - "9095:9092"
+      KAFKA_NODE_ID: "1"
+      KAFKA_PROCESS_ROLES: "broker,controller"
+
+      KAFKA_LISTENERS: "INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092,CONTROLLER://0.0.0.0:29093"
+      KAFKA_ADVERTISED_LISTENERS: "INTERNAL://kafka-1:29092,EXTERNAL://localhost:9092"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT"
+
+      KAFKA_INTER_BROKER_LISTENER_NAME: "INTERNAL"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka-1:29093"
+
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: "1"
+      KAFKA_MIN_INSYNC_REPLICAS: "1"
+
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: "0"
 
   kafka-init:
-    image: bitnami/kafka:3.8
+    image: confluentinc/cp-kafka:7.6.1
     depends_on:
       - kafka-1
-      - kafka-2
-      - kafka-3
     entrypoint: ["/bin/bash", "-c"]
-    command: >
-      "
-      /opt/bitnami/kafka/bin/kafka-topics.sh --bootstrap-server kafka-1:9092
-      --create --if-not-exists --topic link-updates --partitions 6 --replication-factor 3
-      &&
-      /opt/bitnami/kafka/bin/kafka-topics.sh --bootstrap-server kafka-1:9092
-      --create --if-not-exists --topic link-updates-dlq --partitions 6 --replication-factor 3
-      "
+    command: |
+      echo 'Waiting for Kafka...'
+
+      until kafka-topics --bootstrap-server kafka-1:29092 --list >/dev/null 2>&1; do
+        echo 'Kafka is not ready yet...'
+        sleep 2
+      done
+
+      echo 'Creating topics...'
+
+      kafka-topics --bootstrap-server kafka-1:29092 \
+        --create --if-not-exists \
+        --topic link-updates \
+        --partitions 6 \
+        --replication-factor 1
+
+      kafka-topics --bootstrap-server kafka-1:29092 \
+        --create --if-not-exists \
+        --topic link-updates-dlq \
+        --partitions 6 \
+        --replication-factor 1
+
+      echo 'Topics:'
+      kafka-topics --bootstrap-server kafka-1:29092 --list
+
+      echo 'link-updates description:'
+      kafka-topics --bootstrap-server kafka-1:29092 --describe --topic link-updates
+
+      echo 'Done.'
     restart: "no"
