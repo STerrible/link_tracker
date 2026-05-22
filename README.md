@@ -4,7 +4,7 @@
 
 > **LinkTracker** — Telegram-бот для отслеживания изменений на веб-страницах с оперативным уведомлением пользователя.
 
-[![Java](https://img.shields.io/badge/Java-25%2B-orange?logo=openjdk)](#)
+[![Java](https://img.shields.io/badge/Java-21%2B-orange?logo=openjdk)](#)
 [![Spring Boot](https://img.shields.io/badge/Spring_Boot-service-6DB33F?logo=springboot&logoColor=white)](#)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-database-4169E1?logo=postgresql&logoColor=white)](#)
 [![Docker](https://img.shields.io/badge/Docker-required-2496ED?logo=docker&logoColor=white)](#)
@@ -50,7 +50,7 @@ $env:BOT_TOKEN="ВАШ_ТОКЕН"
 ```
 
 > [!IMPORTANT]
-> Для запуска требуется **JDK 25 и выше**.
+> Для запуска требуется **JDK 21 и выше**.
 
 ---
 
@@ -210,3 +210,31 @@ $env:GITHUB_TOKEN="ВАШ_ТОКЕН", после чего запустить с
 - тесты и проверки качества кода,
 - модульную структуру для дальнейшего развития.
 
+
+
+## Kafka-кластер для асинхронных нотификаций
+
+В `compose.yaml` добавлен отказоустойчивый Kafka KRaft-кластер из трёх брокеров (`kafka-1..3`) и init-сервис `kafka-init`, который создаёт топики:
+
+- `link-updates`
+- `link-updates-dlq`
+
+Выбранные настройки топиков:
+
+- `partitions=6` — позволяет параллельно обрабатывать уведомления несколькими консьюмерами при росте нагрузки;
+- `replication-factor=3` — данные реплицируются на все 3 брокера и сохраняются при потере одного узла;
+- `min.insync.replicas=2` (на уровне кластера) — подтверждение записи требует кворум, снижая риск потери данных.
+
+Запуск:
+
+```bash
+docker compose up -d kafka-1 kafka-2 kafka-3 kafka-init
+```
+
+## Какой тест запускать для проверки Scrapper → Kafka → Bot
+
+Локально для проверки интеграции Kafka-консьюмера в Bot можно запускать:
+
+```bash
+mvn -pl bot -Dtest=KafkaConsumerIntegrationTest test
+```
