@@ -4,7 +4,7 @@
 
 > **LinkTracker** — Telegram-бот для отслеживания изменений на веб-страницах с оперативным уведомлением пользователя.
 
-[![Java](https://img.shields.io/badge/Java-25%2B-orange?logo=openjdk)](#)
+[![Java](https://img.shields.io/badge/Java-21%2B-orange?logo=openjdk)](#)
 [![Spring Boot](https://img.shields.io/badge/Spring_Boot-service-6DB33F?logo=springboot&logoColor=white)](#)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-database-4169E1?logo=postgresql&logoColor=white)](#)
 [![Docker](https://img.shields.io/badge/Docker-required-2496ED?logo=docker&logoColor=white)](#)
@@ -50,7 +50,7 @@ $env:BOT_TOKEN="ВАШ_ТОКЕН"
 ```
 
 > [!IMPORTANT]
-> Для запуска требуется **JDK 25 и выше**.
+> Для запуска требуется **JDK 21 и выше**.
 
 ---
 
